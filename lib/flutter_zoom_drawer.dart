@@ -40,6 +40,7 @@ class ZoomDrawer extends StatefulWidget {
     this.closeCurve,
     this.duration,
     this.disableGesture = false,
+    this.isRTL = false,
   }) : assert(angle <= 0.0 && angle >= -30.0);
 
   /// Layout style
@@ -84,6 +85,9 @@ class ZoomDrawer extends StatefulWidget {
   /// Disable swipe gesture
   final bool disableGesture;
 
+  /// Disable swipe gesture
+  final bool isRTL;
+
   @override
   _ZoomDrawerState createState() => new _ZoomDrawerState();
 
@@ -94,9 +98,11 @@ class ZoomDrawer extends StatefulWidget {
   }
 
   /// Static function to determine the device text direction RTL/LTR
-  static bool isRTL() {
-    return ui.window.locale.languageCode.toLowerCase() == "ar";
-  }
+  // static bool isRTL() {
+  //   final sd = {'' : isRtl};
+  //   return sd;
+  //   // return isRtl ? true : false;
+  // }
 }
 
 class _ZoomDrawerState extends State<ZoomDrawer>
@@ -106,11 +112,16 @@ class _ZoomDrawerState extends State<ZoomDrawer>
   final Curve _slideOutCurve = Interval(0.0, 1.0, curve: Curves.easeOut);
   final Curve _slideInCurve =
       Interval(0.0, 1.0, curve: Curves.easeOut); // Curves.bounceOut
+  // @override
+  // void initState() {
+
+  //   super.initState();
+  // }
 
   /// check the slide direction
-  final int _rtlSlide = ZoomDrawer.isRTL() ? -1 : 1;
+  int? _rtlSlide;
 
-  final bool _rtl = ZoomDrawer.isRTL();
+  bool? _rtl;
 
   AnimationController? _animationController;
   DrawerState _state = DrawerState.closed;
@@ -147,6 +158,8 @@ class _ZoomDrawerState extends State<ZoomDrawer>
 
   @override
   void initState() {
+    _rtlSlide = widget.isRTL ? -1 : 1;
+    _rtl = widget.isRTL;
     super.initState();
 
     stateNotifier = ValueNotifier(_state);
@@ -237,7 +250,7 @@ class _ZoomDrawerState extends State<ZoomDrawer>
     }
 
     /// calculated sliding amount based on the RTL and animation value
-    final slideAmount = (widget.slideWidth - slide) * slidePercent * _rtlSlide;
+    final slideAmount = (widget.slideWidth - slide) * slidePercent * _rtlSlide!;
 
     /// calculated scale amount based on the provided scale and animation value
     final contentScale = (scale ?? 1.0) - (0.2 * scalePercent);
@@ -247,7 +260,7 @@ class _ZoomDrawerState extends State<ZoomDrawer>
 
     /// calculated rotation amount based on the provided angle and animation value
     final rotationAngle =
-        (((angle ?? widget.angle) * pi * _rtlSlide) / 180) * _percentOpen;
+        (((angle ?? widget.angle) * pi * _rtlSlide!) / 180) * _percentOpen;
 
     return Transform(
       transform: Matrix4.translationValues(slideAmount, 0.0, 0.0)
@@ -268,8 +281,8 @@ class _ZoomDrawerState extends State<ZoomDrawer>
     return GestureDetector(
       /// Detecting the slide amount to close the drawer in RTL & LTR
       onPanUpdate: (details) {
-        if (_state == DrawerState.open && details.delta.dx < -6 && !_rtl ||
-            details.delta.dx < 6 && _rtl) {
+        if (_state == DrawerState.open && details.delta.dx < -6 && !_rtl! ||
+            details.delta.dx < 6 && _rtl!) {
           toggle();
         }
       },
@@ -330,7 +343,7 @@ class _ZoomDrawerState extends State<ZoomDrawer>
 
   Widget renderStyle1() {
     final slidePercent =
-        ZoomDrawer.isRTL() ? MediaQuery.of(context).size.width * .1 : 15.0;
+        widget.isRTL ? MediaQuery.of(context).size.width * .1 : 15.0;
     return Stack(
       children: [
         widget.menuScreen,
